@@ -1,0 +1,40 @@
+####### Zookeeper cluster install scripts ######
+
+# create zookeeper account
+adduser --home /usr/zookeeper zookeeper
+su - zookeeper
+ 
+# install zookeeper
+wget http://mirrors.cnnic.cn/apache/zookeeper/zookeeper-3.4.6/zookeeper-3.4.6.tar.gz
+tar xfz zookeeper-3.4.6.tar.gz
+echo 'export ZOOKEEPER_HOME=$HOME/zookeeper-3.4.6' >>.profile
+echo 'export PATH=$ZOOKEEPER_HOME/bin:$PATH' >>.profile
+source .profile
+cp $ZOOKEEPER_HOME/conf/zoo_sample.cfg $ZOOKEEPER_HOME/conf/zoo.cfg
+ 
+# config data dir
+sed -i "s@dataDir=/tmp/zookeeper@dataDir=$ZOOKEEPER_HOME/data@" $ZOOKEEPER_HOME/conf/zoo.cfg
+ 
+################################################
+# config servers
+sed -i '/^server\./d' $ZOOKEEPER_HOME/conf/zoo.cfg
+echo '
+server.1=10.112.3.11:2888:3888
+server.2=10.112.3.10:2888:3888
+server.3=10.112.2.33:2888:3888
+' >>$ZOOKEEPER_HOME/conf/zoo.cfg
+################################################
+ 
+################################################
+# create myid
+MYID=1
+mkdir -p $ZOOKEEPER_HOME/data
+echo $MYID >$ZOOKEEPER_HOME/data/myid
+################################################
+ 
+# start server
+$ZOOKEEPER_HOME/bin/zkServer.sh start
+ 
+# check
+sleep 3
+echo stat | nc $HOSTNAME 2181
